@@ -1,0 +1,124 @@
+openapi: 3.0.0
+info:
+  title: WSO2-Orchestrator Medium
+  description: "Questa API Write sfrutta il potenziale di WSO2 per creare un'esperienza di integrazione e orchestrazione avanzata, agile e scalabile. Abbracciando l'innovazione e l'efficienza di WSO2, questa API è un esempio di come le soluzioni di integrazione possono essere rivoluzionarie, offrendo ai clienti un servizio all'avanguardia e performante."
+  version: 3.0.1
+servers:
+  - url: http://localhost:8290/write
+tags:
+  - name: orchestrator
+    externalDocs:
+      description: Find out more
+      url: https://medium.com/@andreacavallo/how-to-esempio-pratico-di-una-orchestrazione-di-microservizi-con-apache-camel-a96f66c85ba5
+paths:
+  /orchestrator/orders:
+    post:
+      tags:
+        - orchestrator
+      summary: "Create a new order. L’input contiene informazioni sul cliente (firstName e lastName), sul prodotto richiesto (productName) e sulla quantità (quantity). In base al nome del prodotto richiesto e alla quantità, l’orchestrazione chiama gli endpoint esposti dal secondo microservizio per processare e persistere l’ordine. Se il prodotto richiesto dall’utente è disponibile, allora viene creato un ordine e le informazioni sull’ordine vengono salvate su MongoDB."
+      requestBody:
+        description: Sample Payload
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                quantity:
+                  type: integer
+                productName:
+                  type: string
+              required:
+                - firstName
+                - lastName
+                - quantity
+                - productName
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  output:
+                    type: object
+                    properties:
+                      orderStatus:
+                        type: string
+                        example: CREATED
+                      orderInfo:
+                        type: object
+                        properties:
+                          orderId:
+                            type: string
+                            example: "1a80efd6-f604-4e3a-ba74-eb8e52ce9a7d"
+                          orderedAt:
+                            type: string
+                            format: date-time
+                            example: "2023-04-06T20:52:12.691532"
+                          deliveredAt:
+                            type: string
+                            format: date-time
+                            example: "2023-04-21T20:52:12.691560"
+                      userInfo:
+                        type: object
+                        properties:
+                          firstName:
+                            type: string
+                            example: andrea
+                          lastName:
+                            type: string
+                            example: cavallo
+                          email:
+                            type: string
+                            example: andrea.cavallo@protonmail.com
+                      productInfo:
+                        type: object
+                        properties:
+                          productId:
+                            type: string
+                            example: "dadcd484-bfb5-41cf-a8dc-2b20d561d87b"
+                          productName:
+                            type: string
+                            example: Switch
+                          price:
+                            type: number
+                            format: float
+                            example: 499.99
+                          quantity:
+                            type: integer
+                            example: 9
+                          isInStock:
+                            type: boolean
+                            example: true
+                  errorMessages:
+                    type: object
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  output:
+                    type: object
+                  errorMessages:
+                    type: string
+                    example: "Bad request, please go to jsonlint.com and fix your input"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  output:
+                    type: object
+                  errorMessages:
+                    type: string
+                    example: "Some error occurred during orchestration"

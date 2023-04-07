@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="CreateOrderSequence" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <property name="createHost" scope="default" type="STRING" value="http://localhost:8082/"/>
+    <property expression="fn:concat($ctx:createHost, 'orders')" name="host" scope="default" type="STRING"/>
+    <property expression="$ctx:host" name="uri.var.httpendpoint" scope="default" type="STRING"/>
+    <log level="custom">
+        <property expression="$ctx:host" name="Sto chiamando la create Orders: "/>
+    </log>
+    <call>
+        <endpoint key="PostEndpoint"/>
+    </call>
+</sequence>

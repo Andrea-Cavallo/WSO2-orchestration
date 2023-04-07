@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="TranscodingOrderSequence" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <property name="hostTranscode" scope="default" type="STRING" value="http://localhost:8082/"/>
+    <property expression="fn:concat($ctx:hostTranscode, 'transcoding')" name="host" scope="default" type="STRING"/>
+    <property expression="$ctx:host" name="uri.var.httpendpoint" scope="default" type="STRING"/>
+    <log level="custom">
+        <property expression="$ctx:host" name="Sto chiamando il transcoding con host: "/>
+    </log>
+    <call>
+        <endpoint key="PostEndpoint"/>
+    </call>
+    <property expression="json-eval($)" name="OrderProcessed" scope="default" type="STRING"/>
+    <log level="custom">
+        <property expression="$ctx:OrderProcessed" name="Order processed: "/>
+    </log>
+</sequence>

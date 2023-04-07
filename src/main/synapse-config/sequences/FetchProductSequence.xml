@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sequence name="FetchProductSequence" trace="disable" xmlns="http://ws.apache.org/ns/synapse">
+    <property name="hostProduct" scope="default" type="STRING" value="http://localhost:8082/"/>
+    <property expression="fn:concat($ctx:hostProduct, 'products?productName=', $ctx:productName)" name="host" scope="default" type="STRING"/>
+    <property expression="$ctx:host" name="uri.var.httpendpoint" scope="default" type="STRING"/>
+    <log level="custom">
+        <property expression="$ctx:host" name="Sto chiamando la fetch product con host: "/>
+    </log>
+    <call>
+        <endpoint key="GetEndpoint"/>
+    </call>
+    <property expression="json-eval($[0])" name="Product" scope="default" type="STRING"/>
+    <log level="custom">
+        <property expression="$ctx:Product" name="Product Fetched is: "/>
+    </log>
+    <property expression="json-eval($[0].isInStock)" name="IsInStock" scope="default" type="STRING"/>
+    <log level="custom">
+        <property expression="$ctx:IsInStock" name="IsInStock is: "/>
+    </log>
+</sequence>

@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<api context="/write" name="Write" xmlns="http://ws.apache.org/ns/synapse">
+    <resource methods="POST" uri-template="/orchestator/orders">
+        <inSequence>
+            <property expression="get-property('SYSTEM_TIME')" name="StartTime" scope="default" type="STRING"/>
+            <property expression="json-eval($.firstName)" name="firstName" scope="default" type="STRING"/>
+            <property expression="json-eval($.lastName)" name="lastName" scope="default" type="STRING"/>
+            <property expression="json-eval($.quantity)" name="quantity" scope="default" type="STRING"/>
+            <property expression="json-eval($.productName)" name="productName" scope="default" type="STRING"/>
+            <payloadFactory media-type="json">
+                <format>{ "firstName":"$1", "lastName":"$2", "quantity":$3, "productName":"$4" }</format>
+                <args>
+                    <arg evaluator="xml" expression="$ctx:firstName"/>
+                    <arg evaluator="xml" expression="$ctx:lastName"/>
+                    <arg evaluator="xml" expression="$ctx:quantity"/>
+                    <arg evaluator="xml" expression="$ctx:productName"/>
+                </args>
+            </payloadFactory>
+            <property expression="json-eval($)" name="InputBody" scope="default" type="STRING"/>
+            <log level="custom">
+                <property expression="$ctx:InputBody" name="Input Body is: "/>
+            </log>
+            <sequence key="FetchProductSequence"/>
+            <property expression="json-eval($[0]))" name="Product" scope="default" type="STRING"/>
+            <log level="custom">
+                <property expression="$ctx:Product" name="Product Fetched: "/>
+            </log>
+            <filter regex="^20\d{1}$" source="get-property('axis2','HTTP_SC')">
+                <then/>
+                <else>
+                    <log level="custom">
+                        <property name="STEP" value="Error fetching product"/>
+                    </log>
+                    <respond/>
+                </else>
+            </filter>
+            <payloadFactory media-type="json">
+                <format>{
+                            	"orderStatus" : "PROCESSING",
+                            	"userRequest" : $1,
+                                "productRequest" : $2
+                            }
+            </format>
+                <args>
+                    <arg evaluator="xml" expression="$ctx:InputBody"/>
+                    <arg evaluator="xml" expression="$ctx:Product"/>
+                </args>
+            </payloadFactory>
+            <property expression="json-eval($)" name="Order" scope="default" type="STRING"/>
+            <log level="custom">
+                <property expression="$ctx:Order" name="Order to process is: "/>
+            </log>
+            <sequence key="TranscodingOrderSequence"/>
+            <filter regex="^20\d{1}$" source="get-property('axis2','HTTP_SC')">
+                <then/>
+                <else>
+                    <log level="custom">
+                        <property name="STEP" value="Error during transcoding"/>
+                    </log>
+                    <respond/>
+                </else>
+            </filter>
+            <property expression="json-eval($)" name="OrderDTO" scope="default" type="STRING"/>
+            <log level="custom">
+                <property expression="$ctx:OrderDTO" name="Order Transcoded is: "/>
+            </log>
+            <switch source="$ctx:IsInStock">
+                <case regex="true">
+                    <log level="custom">
+                        <property expression="$ctx:Order" name="Product is in stock Order can be processed: "/>
+                    </log>
+                    <sequence key="CreateOrderSequence"/>
+                    <filter regex="^20\d{1}$" source="get-property('axis2','HTTP_SC')">
+                        <then/>
+                        <else>
+                            <log level="custom">
+                                <property name="STEP" value="Error during create order"/>
+                            </log>
+                            <respond/>
+                        </else>
+                    </filter>
+                </case>
+                <default>
+                    <enrich>
+                        <source clone="true" type="inline">
+                            <orderStatus>REJECTED</orderStatus>
+                        </source>
+                        <target property="Order" type="property"/>
+                    </enrich>
+                    <log level="custom">
+                        <property expression="$ctx:Order" name="Product is NOT in stock Order will be REJECTED: "/>
+                    </log>
+                </default>
+            </switch>
+            <property expression="get-property('SYSTEM_TIME')" name="EndTime" scope="default" type="STRING"/>
+            <log level="custom">
+                <property expression="fn:number($ctx:EndTime - $ctx:StartTime)" name="Time Elapsed WSo2: "/>
+            </log>
+            <respond/>
+        </inSequence>
+        <outSequence/>
+        <faultSequence/>
+    </resource>
+</api>
